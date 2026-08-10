@@ -1,0 +1,14 @@
+interface:
+  display_name: Kiro CLI v3 Guide
+  short_description: Master Kiro CLI v3 with practical examples
+  default_prompt: Use $kiro-cli-v3-guide to teach me Kiro CLI v3 and build a safe
+    example workspace.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
