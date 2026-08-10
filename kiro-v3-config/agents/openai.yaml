@@ -1,0 +1,14 @@
+interface:
+  display_name: Kiro CLI v3 Config
+  short_description: Create and safely migrate Kiro v3 configs
+  default_prompt: Use $kiro-v3-config to create or update this workspace’s Kiro CLI
+    v3 configuration.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
