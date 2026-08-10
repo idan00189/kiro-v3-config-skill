@@ -1,0 +1,14 @@
+interface:
+  display_name: Kiro v3 MCP Creator
+  short_description: Build and secure Kiro v3 MCP integrations
+  default_prompt: Use $kiro-v3-mcp-creator to create and configure a secure MCP server
+    for Kiro CLI v3.
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
