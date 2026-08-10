@@ -1,11 +1,12 @@
-# Kiro CLI v3 Configuration Skill
+# Kiro CLI v3 Skills
 
-A reusable Agent Skill for creating, updating, auditing, and migrating **Kiro CLI 3.0** configuration.
+A public collection of Agent Skills for learning, creating, updating, auditing, securing, and migrating **Kiro CLI 3.0**.
 
 ## Included skills
 
 - [`kiro-v3-config`](./kiro-v3-config/) — create, audit, validate, and migrate Kiro CLI v3 agents and workspace configuration.
 - [`kiro-v3-mcp-creator`](./kiro-v3-mcp-creator/) — create and secure MCP servers, stdio/HTTP connections, OAuth, environment variables, and agent permissions.
+- [`kiro-cli-v3-guide`](./kiro-cli-v3-guide/) — learn Kiro CLI v3 end to end with copy-ready examples for every major feature, safe SRE patterns, migration, and troubleshooting.
 
 Install the MCP creator directly from:
 
@@ -13,7 +14,13 @@ Install the MCP creator directly from:
 https://github.com/idan00189/kiro-v3-config-skill/tree/main/kiro-v3-mcp-creator
 ```
 
-It covers:
+Install the complete v3 guide directly from:
+
+```text
+https://github.com/idan00189/kiro-v3-config-skill/tree/main/kiro-cli-v3-guide
+```
+
+Across the three skills, the repository covers:
 
 - Markdown custom agents in `.kiro/agents/`
 - Capability-based `permissions.rules`
@@ -22,6 +29,9 @@ It covers:
 - Kiro skills, steering, resources, and `AGENTS.md` integration
 - Safe migration from Kiro CLI 2.x
 - Deterministic configuration validation
+- Installation, authentication, the v3 TUI, models, effort, Plan mode, specs, goals, sessions, checkpoints, and transcripts
+- Tool visibility, capability permissions, approval behavior, subagents, parallel sessions, and safe production/SRE workflows
+- Full examples and troubleshooting for classic-vs-v3 differences and Early Access limitations
 
 ## Install in Kiro
 
@@ -128,4 +138,21 @@ kiro-v3-mcp-creator/
 └── scripts/
     └── kiro_mcp_config.py
 ```
+
+The complete guide follows this layout:
+
+```text
+kiro-cli-v3-guide/
+├── SKILL.md
+├── agents/
+│   └── openai.yaml
+├── assets/
+│   └── icon.svg
+└── references/
+    ├── configuration-and-security.md
+    ├── examples-cookbook.md
+    ├── migration-and-troubleshooting.md
+    └── start-and-workflow.md
+```
+
 No license has been added yet.
