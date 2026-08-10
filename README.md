@@ -2,6 +2,17 @@
 
 A reusable Agent Skill for creating, updating, auditing, and migrating **Kiro CLI 3.0** configuration.
 
+## Included skills
+
+- [`kiro-v3-config`](./kiro-v3-config/) — create, audit, validate, and migrate Kiro CLI v3 agents and workspace configuration.
+- [`kiro-v3-mcp-creator`](./kiro-v3-mcp-creator/) — create and secure MCP servers, stdio/HTTP connections, OAuth, environment variables, and agent permissions.
+
+Install the MCP creator directly from:
+
+```text
+https://github.com/idan00189/kiro-v3-config-skill/tree/main/kiro-v3-mcp-creator
+```
+
 It covers:
 
 - Markdown custom agents in `.kiro/agents/`
@@ -101,4 +112,20 @@ kiro-v3-config/
     └── validate_kiro_v3.py
 ```
 
+
+The MCP creator package follows this layout:
+
+```text
+kiro-v3-mcp-creator/
+├── SKILL.md
+├── agents/
+│   └── openai.yaml
+├── assets/
+│   └── icon.svg
+├── references/
+│   ├── kiro-mcp-v3.md
+│   └── mcp-server-build.md
+└── scripts/
+    └── kiro_mcp_config.py
+```
 No license has been added yet.
