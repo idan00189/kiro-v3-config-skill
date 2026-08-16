@@ -27,6 +27,9 @@ LEGACY_TOOL_IDS = {
     "grepSearch", "listDirectory", "readFile", "webFetch", "webSearch",
     "writeFile",
 }
+LEGACY_POLICY_TOOL_SETTINGS = {
+    "execute_bash", "fs_read", "fs_write", "read", "shell", "write",
+}
 VALID_HOOK_TRIGGERS = {
     "Manual", "PostFileCreate", "PostFileDelete", "PostFileSave", "PostTaskExec",
     "PostToolUse", "PreTaskExec", "PreToolUse", "SessionStart", "Stop",
@@ -137,9 +140,72 @@ class Validator:
             if capability == "all" and effect == "allow" and not rule.get("match"):
                 self.warn(path, f"{label} grants unrestricted capability: all")
 
+    def validate_tools_settings(self, settings: Any, path: Path) -> None:
+        if not isinstance(settings, dict):
+            self.error(path, "toolsSettings must be an object")
+            return
+        for key in settings:
+            if key in LEGACY_POLICY_TOOL_SETTINGS:
+                self.warn(
+                    path,
+                    f"toolsSettings.{key} is legacy for shell/filesystem authority; "
+                    "migrate it to permissions.rules",
+                )
+        subagent = settings.get("subagent")
+        if subagent is None:
+            return
+        if not isinstance(subagent, dict):
+            self.error(path, "toolsSettings.subagent must be an object")
+            return
+        for field in ("availableAgents", "trustedAgents"):
+            patterns = subagent.get(field)
+            if patterns is not None and not (
+                isinstance(patterns, list) and all(isinstance(item, str) for item in patterns)
+            ):
+                self.error(path, f"toolsSettings.subagent.{field} must be an array of strings")
+
+    def validate_mcp_servers(self, servers: Any, path: Path, source: str = "mcpServers") -> None:
+        if not isinstance(servers, dict):
+            self.error(path, f"{source} must be an object")
+            return
+        for name, server in servers.items():
+            label = f"{source}.{name}"
+            if not isinstance(name, str) or not name:
+                self.error(path, f"{source} contains an empty or non-string server name")
+                continue
+            if not isinstance(server, dict):
+                self.error(path, f"MCP server {name!r} must be an object")
+                continue
+            has_command = isinstance(server.get("command"), str) and bool(server["command"])
+            has_url = isinstance(server.get("url"), str) and bool(server["url"])
+            if has_command == has_url:
+                self.error(path, f"MCP server {name!r} must define exactly one of command or url")
+            args = server.get("args")
+            if args is not None and not (
+                isinstance(args, list) and all(isinstance(item, str) for item in args)
+            ):
+                self.error(path, f"{label}.args must be an array of strings")
+            for mapping_name in ("env", "headers"):
+                mapping = server.get(mapping_name)
+                if mapping is not None and not (
+                    isinstance(mapping, dict)
+                    and all(isinstance(key, str) and isinstance(value, str) for key, value in mapping.items())
+                ):
+                    self.error(path, f"{label}.{mapping_name} must map strings to strings")
+            if "disabled" in server and not isinstance(server["disabled"], bool):
+                self.error(path, f"{label}.disabled must be true or false")
+            for list_name in ("autoApprove", "disabledTools"):
+                tools = server.get(list_name)
+                if tools is not None and not (
+                    isinstance(tools, list) and all(isinstance(item, str) for item in tools)
+                ):
+                    self.error(path, f"{label}.{list_name} must be an array of strings")
+            if server.get("autoApprove") == ["*"]:
+                self.warn(path, f"MCP server {name!r} auto-approves every tool")
+
     def validate_agent_data(self, data: dict[str, Any], path: Path) -> None:
         if "toolsSettings" in data:
-            self.warn(path, "toolsSettings is legacy for shell/filesystem policy; migrate to permissions.rules")
+            self.validate_tools_settings(data["toolsSettings"], path)
         tools = data.get("tools")
         if tools is not None:
             if not isinstance(tools, list) or not all(isinstance(item, str) for item in tools):
@@ -156,10 +222,26 @@ class Validator:
                 self.error(path, "permissions must be an object")
             else:
                 self.validate_permission_rules(permissions.get("rules"), path)
+        inline_mcp = data.get("mcpServers")
+        if inline_mcp is not None:
+            self.validate_mcp_servers(inline_mcp, path, "mcpServers")
         if "hooks" in data:
             self.warn(path, "Embedded hooks are a legacy format; move them to .kiro/hooks/*.json")
         if data.get("includeMcpJson") is True and not (self.root / ".kiro/settings/mcp.json").exists():
             self.info(path, "includeMcpJson is enabled but no workspace MCP file exists; a global MCP file may still provide servers")
+        if data.get("includeMcpJson") is False and isinstance(tools, list):
+            inline_names = set(inline_mcp) if isinstance(inline_mcp, dict) else set()
+            for tool in tools:
+                if tool == "@mcp" and not inline_names:
+                    self.warn(path, "@mcp is visible but includeMcpJson is false and no inline MCP servers are defined")
+                elif isinstance(tool, str) and tool.startswith("@") and tool not in {"@builtin", "@mcp"}:
+                    server_name = tool[1:].split("/", 1)[0]
+                    if server_name not in inline_names:
+                        self.warn(
+                            path,
+                            f"Tool {tool!r} references MCP server {server_name!r}, but includeMcpJson is false "
+                            "and that server is not defined in the agent",
+                        )
         self.check_literals(data, path)
 
     def validate_agents(self) -> None:
@@ -239,21 +321,8 @@ class Validator:
         data = self.load_json(path)
         if not isinstance(data, dict):
             return
-        servers = data.get("mcpServers")
-        if not isinstance(servers, dict):
-            self.error(path, "mcpServers must be an object")
-            return
-        for name, server in servers.items():
-            if not isinstance(server, dict):
-                self.error(path, f"MCP server {name!r} must be an object")
-                continue
-            has_command = isinstance(server.get("command"), str) and bool(server["command"])
-            has_url = isinstance(server.get("url"), str) and bool(server["url"])
-            if has_command == has_url:
-                self.error(path, f"MCP server {name!r} must define exactly one of command or url")
-            if server.get("autoApprove") == ["*"] or server.get("autoApprove") == "*":
-                self.warn(path, f"MCP server {name!r} auto-approves every tool")
-            self.check_literals(server, path, f"mcpServers.{name}")
+        self.validate_mcp_servers(data.get("mcpServers"), path)
+        self.check_literals(data, path)
 
     def validate_skills(self) -> None:
         directory = self.root / ".kiro/skills"
